@@ -12,26 +12,12 @@ class Infantry:
 
 
     def move(self, dx, dy):
-        # 仅移动一步
         if abs(dx) + abs(dy) > self.Infantry:
             return
         self.x += dx
         self.y += dy
         self.moved = True
 
-    # def get_state(self,tank,player_units):
-    #     nearby = player_units[0]
-    #     distense = 120
-    #     for i in player_units:
-    #         if distense > (i.x + i.y):
-    #             nearby =  i
-    #             distense = i.x + i.y
-    #     return {
-    #         "infantry":(self.x,self.y),
-    #         "tank":(tank.x,tank.y),
-    #         "nearby": nearby,
-    #         "hp":self.hp
-    #     }
 
 
 

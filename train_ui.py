@@ -11,74 +11,14 @@ from game.panal import *
 pygame.init()
 
 
-def get_nearby(infantry_units, unit):
-    min_distance = 100
-    target_infantry = None
-    for infantry in infantry_units:
-        distance = abs(infantry.x - unit.x) + abs(infantry.y - unit.y)
-        if distance < min_distance and infantry.hp > 0:
-            min_distance = distance
-            target_infantry = infantry
-    return (target_infantry.x, target_infantry.y)
-
-
 def transform_state(unit, tank):
     dx = tank.x - unit.x
     dy = tank.y - unit.y
     return (dx,dy,unit.hp)
 
 
-
-class Environment:
-    def __init__(self):
-        self.game_end = False
-        self.player_units = [Infantry(random.randint(BOARD_WIDTH // 2, BOARD_WIDTH // 4 * 3), random.randint(int(BOARD_HEIGHT*0.3), int(BOARD_HEIGHT*0.7))) for _ in
-                        range(10)]
-        self.tank = Tank(BOARD_WIDTH - 5, BOARD_HEIGHT // 2)
-        self.tank_ai = TankAI(self.tank, None)
-        self.states = []
-        for i in self.player_units:
-            self.states.append(transform_state(i,self.tank))
-
-    def reset(self):
-        self.game_end = False
-        self.player_units = [Infantry(random.randint(BOARD_WIDTH // 2, BOARD_WIDTH // 4 * 3), random.randint(int(BOARD_HEIGHT*0.3), int(BOARD_HEIGHT*0.7))) for _ in
-                        range(10)]
-        self.tank = Tank(BOARD_WIDTH - 5, BOARD_HEIGHT // 2)
-        self.tank_ai = TankAI(self.tank, None)
-
-    def step(self, actions):
-        rewards = [0 for i in range(10)]
-        for index,unit in enumerate(self.player_units):
-            unit.move(actions[index][0],actions[index][1])
-
-        under_crush_units = []
-        self.tank_ai.decide_movement(self.player_units)
-        for x, y in self.tank.route:
-            for i in self.tank.crush(x, y, self.player_units):
-                #被碾压了但是未被记录
-                if i not in under_crush_units:
-                    under_crush_units.append(i)
-        for index in under_crush_units:
-            rewards[index] -= 35
-        self.tank.route = []
-        self.tank_ai.decide_attack(self.player_units)
-        for index,infantry in enumerate(self.player_units):
-            if infantry.hp <= 0:
-                continue
-            if abs(infantry.x - self.tank.x) + abs(infantry.y - self.tank.y) <= infantry.range:
-                self.tank.hp -= infantry.attack_power
-                rewards[index] += 6
-            else:
-                rewards[index] -= 1
-
-        game_end = check_victory_conditions(self.tank, self.player_units, False)
-        self.states = []
-        for i in self.player_units:
-            self.states.append(transform_state(i,self.tank))
-        if game_end:
-            print(game_end)
-        return self.states,rewards,game_end
+screen = ui_init()
+clock = pygame.time.Clock()
 
 
 class QLearningAgent:
@@ -122,6 +62,7 @@ class QLearningAgent:
         # 如果q_table.pkl存在，则加载,使用pathlib
         import pickle
         if pathlib.Path('q_table.pkl').exists():
+            print('load q_table.pkl')
             with open('q_table.pkl', 'rb') as f:
                 q_table = pickle.load(f)
             return q_table
@@ -138,31 +79,120 @@ class QLearningAgent:
         return result
 
 
+class Environment:
+    def __init__(self):
+        self.game_end = False
+        self.player_units = [Infantry(random.randint(BOARD_WIDTH // 2, BOARD_WIDTH // 4 * 3), random.randint(int(BOARD_HEIGHT*0.3), int(BOARD_HEIGHT*0.7))) for _ in
+                             range(10)]
+        self.tank = Tank(BOARD_WIDTH - 5, BOARD_HEIGHT // 2)
+        self.tank_ai = TankAI(self.tank, None)
+        self.states = []
+
+        for i in self.player_units:
+            self.states.append(transform_state(i, self.tank))
+
+    def reset(self):
+        self.game_end = False
+        self.player_units = [Infantry(random.randint(BOARD_WIDTH // 2, BOARD_WIDTH // 4 * 3), random.randint(int(BOARD_HEIGHT*0.3), int(BOARD_HEIGHT*0.7))) for _ in
+                             range(10)]
+        self.tank = Tank(BOARD_WIDTH - 5, BOARD_HEIGHT // 2)
+        self.tank_ai = TankAI(self.tank, None)
+
+    def step(self, actions, use_screen=False):
+        rewards = [0 for i in range(10)]
+        for index, unit in enumerate(self.player_units):
+            unit.move(actions[index][0], actions[index][1])
+
+        under_crush_units = []
+        self.tank_ai.decide_movement(self.player_units)
+        for x, y in self.tank.route:
+            for i in self.tank.crush(x, y, self.player_units):
+                # 被碾压了但是未被记录
+                if i not in under_crush_units:
+                    under_crush_units.append(i)
+        for index in under_crush_units:
+            rewards[index] -= 35
+        self.tank.route = []
+        self.tank_ai.decide_attack(self.player_units)
+        for index, infantry in enumerate(self.player_units):
+            if infantry.hp <= 0:
+                continue
+            if abs(infantry.x - self.tank.x) + abs(infantry.y - self.tank.y) <= infantry.range:
+                self.tank.hp -= infantry.attack_power
+                rewards[index] += 6
+            else:
+                rewards[index] -= 1
+        if use_screen:
+            game_end = check_victory_conditions(self.tank, self.player_units, screen)
+        else:
+            game_end = check_victory_conditions(self.tank, self.player_units)
+        self.states = []
+        for i in self.player_units:
+            self.states.append(transform_state(i, self.tank))
+        if game_end:
+            print(game_end)
+
+        return self.states, rewards, game_end
+
+
+def show_state(player_units, tank):
+    screen.fill((0, 0, 0))
+    # 绘制网格
+    for x in range(BOARD_WIDTH):
+        for y in range(BOARD_HEIGHT):
+            rect = pygame.Rect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT)
+            pygame.draw.rect(screen, "#2F4F4F", rect, 1)
+
+    # 绘制单位
+    for infantry in player_units:
+        rect = pygame.Rect(infantry.x * CELL_WIDTH, infantry.y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT)
+        if infantry.hp <= 0:
+            continue
+
+        pygame.draw.rect(screen, BLUE, rect)
+        pygame.draw.rect(screen, BLACK, rect, 1)
+
+    # 绘制坦克
+    tank_rect = pygame.Rect(
+        tank.x * CELL_WIDTH - CELL_WIDTH,
+        tank.y * CELL_HEIGHT - CELL_HEIGHT,
+        CELL_WIDTH * tank.size[0],
+        CELL_HEIGHT * tank.size[1]
+    )
+    pygame.draw.rect(screen, RED, tank_rect)
+    pygame.draw.rect(screen, BLACK, tank_rect, 1)
+
+    draw_hp_panel(tank, player_units, screen)
+    pygame.display.update()
+    clock.tick(5)
+
+
+
+
 env = Environment()
 agent = QLearningAgent(env)
-num_episodes = 20*20*41*5
+num_episodes = 105
+show_state(env.player_units, env.tank)
 
 for episode in range(num_episodes):
-    try:
-        # 重置环境
-        env.reset()
-        total_reward = 0
+    # 重置环境
+    env.reset()
+    if episode > 100:
+        show_state(env.player_units, env.tank)
+    total_reward = 0
 
-        while True:
+    while True:
+        try:
             # 获取当前状态
             current_states = [transform_state(unit, env.tank) for unit in env.player_units]
             actions = []
-
             # 选择动作
             for idx, state in enumerate(current_states):
                 if state is not None:  # 确保状态合法
-                    # action = agent.q_learning_units[idx].choose_action(state)
                     action = agent.choose_action(state)
                     actions.append(action)
-
             # 执行动作并获取新状态和奖励
-            next_states, rewards, done = env.step(actions)
-
+            next_states, rewards, done = env.step(actions, episode > 100)
             # 更新Q表
             for idx, (state, action, reward, next_state) in enumerate(
                     zip(current_states, actions, rewards, next_states)):
@@ -173,22 +203,19 @@ for episode in range(num_episodes):
                 elif abs(state[1]) > 20:
                     state = (state[0], int(state[1] / abs(state[1]) * 20), state[2])
                 agent.update_q_table(state, action, reward, next_state)
-
             total_reward += sum(rewards)
-
             # 检查游戏是否结束
             if done:
                 # 打印训练信息
                 print(f"Episode {episode + 1}: Total Reward = {total_reward}! ")
                 break
+            if episode > 100:
+                show_state(env.player_units, env.tank)
+        except :
+            pass
+    # 衰减探索率
+    agent.decay_epsilon()
 
-        # 衰减探索率
-        agent.decay_epsilon()
-    except:
-        time.sleep(1)
+pygame.quit()
 
-import pickle
 
-# # 保存 Q 表
-with open('q_table.pkl', 'wb') as f:
-    pickle.dump(agent.q_table, f)

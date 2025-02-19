@@ -8,7 +8,7 @@ from game.infantry import Infantry,ACTION
 from game.tank import *
 from game.panal import *
 pygame.init()
-
+num_episodes = 50*50*4*41*3
 
 def get_nearby(infantry_units, unit):
     min_distance = 100
@@ -26,19 +26,6 @@ def transform_state(unit, tank):
     dy = tank.y - unit.y
     return (dx,dy,unit.hp)
 
-
-def create_q_table():
-    state = []
-    for i in range(-20, 20 + 1):
-        for j in range(-20, 20 - i + 1):
-            state.append((i, j))
-    result = {}
-    for i in state:
-        for j in [0,2,4,6,8]:
-            result[(i[0],i[1],j)] = {}
-            for k in ACTION:
-                result[(i[0], i[1], j)][k] = 0
-    return result
 
 class Environment:
     def __init__(self):
@@ -83,15 +70,16 @@ class Environment:
                 rewards[index] += 5
 
             else:
-                rewards[index] -= 1
+                rewards[index] -= 0.5
                 # 给予副奖励
                 pass
 
         game_end = check_victory_conditions(self.tank, self.player_units, False)
+        self.states = []
         for i in self.player_units:
             self.states.append(transform_state(i,self.tank))
-            print(i.hp, end="\t")
-        print(f"\ntank position {self.tank.x},{self.tank.y} ,tank hp:{self.tank.hp}")
+        #     print(i.hp, end="\t")
+        # print(f"\ntank position {self.tank.x},{self.tank.y} ,tank hp:{self.tank.hp}")
         if game_end:
             print(game_end)
 
@@ -101,7 +89,7 @@ class Environment:
 class QLearningAgent:
     def __init__(self, env):
         self.env = env
-        self.q_table = {}
+        self.q_table = self.create_q_table()
         self.alpha = 0.1
         self.gamma = 0.99
         self.epsilon = 1.0
@@ -109,6 +97,12 @@ class QLearningAgent:
         self.epsilon_decay = 0.995
 
     def get_q_value(self, state, action):
+        if abs(state[0]) > 20 and abs(state[1]) > 20:
+            state = (int(state[0] / abs(state[0]) * 20), int(state[1] / abs(state[1]) * 20), state[2])
+        elif abs(state[0]) > 20:
+            state = (int(state[0] / abs(state[0]) * 20), state[1], state[2])
+        elif abs(state[1]) > 20:
+            state = (state[0], int(state[1] / abs(state[1]) * 20), state[2])
         return self.q_table.get(state).get(action)
 
     def choose_action(self, state):
@@ -124,8 +118,77 @@ class QLearningAgent:
         current_q = self.get_q_value(state, action)
         future_q = max([self.get_q_value(new_state, a) for a in ACTION])
         new_q = current_q + self.alpha * (reward + self.gamma * future_q - current_q)
-        self.q_table[(state, action)] = new_q
+        self.q_table[state][action] = new_q
 
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
+
+    def create_q_table(self):
+        state = []
+        for i in range(-20, 20 + 1):
+            for j in range(-20, 20 + 1):
+                state.append((i, j))
+        result = {}
+        for i in state:
+            for j in [0, 2, 4, 6, 8]:
+                result[(i[0], i[1], j)] = {}
+                for k in ACTION:
+                    result[(i[0], i[1], j)][k] = 0
+        return result
+
+
+env = Environment()
+agent = QLearningAgent(env)
+
+
+for episode in range(num_episodes):
+    try:
+        # 重置环境
+        env.reset()
+        total_reward = 0
+
+        while True:
+            # 获取当前状态
+            current_states = [transform_state(unit, env.tank) for unit in env.player_units]
+            actions = []
+
+            # 选择动作
+            for idx, state in enumerate(current_states):
+                if state is not None:  # 确保状态合法
+                    # action = agent.q_learning_units[idx].choose_action(state)
+                    action = agent.choose_action(state)
+                    actions.append(action)
+
+            # 执行动作并获取新状态和奖励
+            next_states, rewards, done = env.step(actions)
+
+            # 更新Q表
+            for idx, (state, action, reward, next_state) in enumerate(
+                    zip(current_states, actions, rewards, next_states)):
+                if abs(state[0]) > 20 and abs(state[1]) > 20:
+                    state = (int(state[0] / abs(state[0]) * 20), int(state[1] / abs(state[1]) * 20), state[2])
+                elif abs(state[0]) > 20:
+                    state = (int(state[0] / abs(state[0]) * 20), state[1], state[2])
+                elif abs(state[1]) > 20:
+                    state = (state[0], int(state[1] / abs(state[1]) * 20), state[2])
+                agent.update_q_table(state, action, reward, next_state)
+
+            total_reward += sum(rewards)
+
+            # 检查游戏是否结束
+            if done:
+                # 打印训练信息
+                print(f"Episode {episode + 1}: Total Reward = {total_reward}! ")
+                break
+
+        # 衰减探索率
+        agent.decay_epsilon()
+    except:
+        time.sleep(1)
+
+import pickle
+
+# 保存 Q 表
+with open('q_table.pkl', 'wb') as f:
+    pickle.dump(agent.q_table, f)
 

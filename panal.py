@@ -1,8 +1,10 @@
+import time
+
 import pygame
 
 # 设置窗口大小
-WINDOW_WIDTH = 1000
-WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 1000
 
 # 定义颜色
 BLACK = (0, 0, 0)
@@ -12,9 +14,9 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 
 # 定义网格大小
-GRID_SIZE = 20
-BOARD_WIDTH = 50
-BOARD_HEIGHT = 50
+# GRID_SIZE = 20
+BOARD_WIDTH = 100
+BOARD_HEIGHT = 100
 
 # 计算每个网格的实际像素大小
 CELL_WIDTH = (WINDOW_WIDTH - 200)  // BOARD_WIDTH
@@ -25,7 +27,7 @@ PANEL_X = WINDOW_WIDTH - PANEL_WIDTH
 # 创建窗口
 def ui_init():
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Turn-Based Strategy Game")
+    # pygame.display.set_caption("Turn-Based Strategy Game")
     return screen
 
 def draw_hp_panel(tank,player_units,screen):
@@ -53,7 +55,8 @@ def check_victory_conditions(tank,player_units,use_ui=False,):
             use_ui.fill(BLACK)  # 填充黑色背景
             use_ui.blit(text, text_rect)  # 绘制胜利或失败的文字
             pygame.display.flip()  # 更新屏幕
-            pygame.time.wait(2000)
+            # pygame.time.wait(2000)
+            time.sleep(1)
         return "Player Wins!"
     elif all(infantry.hp <= 0 for infantry in player_units):
         text = font.render("Player Loses!", True, RED)   # 红色文字表示玩家失败
@@ -63,7 +66,8 @@ def check_victory_conditions(tank,player_units,use_ui=False,):
             use_ui.fill(BLACK)  # 填充黑色背景
             use_ui.blit(text, text_rect)  # 绘制胜利或失败的文字
             pygame.display.flip()  # 更新屏幕
-            pygame.time.wait(2000)
+            time.sleep(1)
+            # pygame.time.wait(2000)
         return "Player Loses!"
     return False
 

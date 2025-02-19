@@ -5,7 +5,7 @@ class Tank:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.hp = 80
+        self.hp = 75
         self.attack_power = 2
         self.range = 17
         self.movement = 7
@@ -56,7 +56,7 @@ class TankAI:
 
     def decide_movement(self, infantry_units: list):
         # 计算坦克距离最近的步兵
-        min_distance = 100
+        min_distance = 1000
         target_infantry = None
         for infantry in infantry_units:
             distance = abs(infantry.x - self.tank.x) + abs(infantry.y - self.tank.y)
@@ -88,13 +88,7 @@ class TankAI:
             if infantry.hp <= 0:
                 continue
             if abs(infantry.x - self.tank.x) + abs(infantry.y - self.tank.y) <= self.tank.range:
-                # area = tank.attack(infantry.x, infantry.y)
                 infantry.hp -= self.tank.attack_power
                 break
 
-        # attack_area = []
-        # for dx in range(-1, 2):
-        #     for dy in range(-1, 2):
-        #         attack_area.append((self.tank.x + dx, self.tank.y + dy))
-        # return attack_area
 

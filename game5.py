@@ -16,7 +16,8 @@ def start_ui():
     ui_init()
     clock = pygame.time.Clock()
     # 初始化单位
-    player_units = [Infantry(random.randint(0, BOARD_WIDTH // 2), random.randint(0, BOARD_HEIGHT)) for _ in range(10)]
+    player_units = [Infantry(random.randint(BOARD_WIDTH // 2, BOARD_WIDTH // 4 * 3), random.randint(int(BOARD_HEIGHT*0.3), int(BOARD_HEIGHT*0.7))) for _ in
+                        range(10)]
     tank = Tank(BOARD_WIDTH - 5, BOARD_HEIGHT // 2)
     tank_ai = TankAI(tank, None)
 
