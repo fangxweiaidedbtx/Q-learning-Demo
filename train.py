@@ -187,8 +187,8 @@ for episode in range(num_episodes):
     except:
         time.sleep(1)
 
-import pickle
+#import pickle
 
 # # 保存 Q 表
-with open('q_table.pkl', 'wb') as f:
-    pickle.dump(agent.q_table, f)
+#with open('q_table.pkl', 'wb') as f:
+#    pickle.dump(agent.q_table, f)
