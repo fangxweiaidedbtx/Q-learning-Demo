@@ -3,6 +3,7 @@
 ## Project Background
 
 This project simulates a turn-based strategy scenario similar to the battle between 10 anti-air infantry and an Apocalypse Tank in Command & Conquer: Red Alert 3. The player controls the infantry units using reinforcement learning algorithms, with the goal of surviving under the tank's crash and attacks and ultimately destroying the tank. The project employs the Q-learning algorithm for training, including complete game logic, a visual interface, and a training framework.
+video link :https://drive.google.com/file/d/1eMiAzq4YBNE3Hugr_GHDW3v9E791aPqy/view?usp=sharing
 
 ## Code Structure Overview
 

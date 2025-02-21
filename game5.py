@@ -9,6 +9,11 @@ pygame.init()
 
 game_end = False
 
+infantry_image = pygame.image.load("unit.png")
+infantry_image = pygame.transform.scale(infantry_image, (CELL_WIDTH, CELL_HEIGHT))
+
+tank_image = pygame.image.load("tank.png")
+tank_image = pygame.transform.scale(tank_image, (CELL_WIDTH * 3, CELL_HEIGHT * 3))
 
 def start_ui():
     global game_end
@@ -22,6 +27,7 @@ def start_ui():
     tank_ai = TankAI(tank, None)
 
     selected_unit = None
+
 
     while not game_end:
         screen.fill(BLACK)
@@ -77,13 +83,13 @@ def start_ui():
             rect = pygame.Rect(infantry.x * CELL_WIDTH, infantry.y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT)
             if infantry.hp <= 0:
                 continue
+            screen.blit(infantry_image, rect.topleft)
             if infantry.selected:
-                pygame.draw.rect(screen, GREEN, rect)
+                pygame.draw.rect(screen, "#00FFFF", rect, 1)
             elif not infantry.moved:
-                pygame.draw.rect(screen, BLUE, rect)
+                pygame.draw.rect(screen, "#4444AA", rect, 1)
             else:
-                pygame.draw.rect(screen, "#4444AA", rect)
-            pygame.draw.rect(screen, BLACK, rect, 1)
+                pygame.draw.rect(screen, RED, rect, 1)
 
         # 绘制坦克
         tank_rect = pygame.Rect(
@@ -92,7 +98,7 @@ def start_ui():
             CELL_WIDTH * tank.size[0],
             CELL_HEIGHT * tank.size[1]
         )
-        pygame.draw.rect(screen, RED, tank_rect)
+        screen.blit(tank_image, tank_rect.topleft)
         pygame.draw.rect(screen, BLACK, tank_rect, 1)
 
         draw_hp_panel(tank,player_units,screen)

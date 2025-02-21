@@ -29,7 +29,7 @@ class QLearningAgent:
         self.gamma = 0.99
         self.epsilon = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.05
 
     def get_q_value(self, state, action):
         if abs(state[0]) > 20 and abs(state[1]) > 20:
@@ -169,14 +169,14 @@ def show_state(player_units, tank):
 
     draw_hp_panel(tank, player_units, screen)
     pygame.display.update()
-    clock.tick(5)
+    clock.tick(6)
 
 
 
 SHOW_TIME = 10
 env = Environment()
 agent = QLearningAgent(env)
-num_episodes = 800
+num_episodes = 150
 show_state(env.player_units, env.tank)
 
 for episode in range(num_episodes):

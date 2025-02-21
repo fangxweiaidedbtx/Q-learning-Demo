@@ -27,7 +27,7 @@ for i in range(-INFANTRY_MOVEMENT,INFANTRY_MOVEMENT+1):
         ACTION.append((i,j))
 
 if __name__ == '__main__':
-    a = Infantry(5,7)
-
+    # a = Infantry(5,7)
+    print(ACTION)
 
 
