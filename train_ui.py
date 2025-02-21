@@ -134,7 +134,11 @@ class Environment:
 
         return self.states, rewards, game_end
 
+infantry_image = pygame.image.load("unit.png")
+infantry_image = pygame.transform.scale(infantry_image, (CELL_WIDTH, CELL_HEIGHT))
 
+tank_image = pygame.image.load("tank.png")
+tank_image = pygame.transform.scale(tank_image, (CELL_WIDTH * 3, CELL_HEIGHT * 3))
 def show_state(player_units, tank):
     screen.fill((0, 0, 0))
     # 绘制网格
@@ -148,8 +152,8 @@ def show_state(player_units, tank):
         rect = pygame.Rect(infantry.x * CELL_WIDTH, infantry.y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT)
         if infantry.hp <= 0:
             continue
-
-        pygame.draw.rect(screen, BLUE, rect)
+        screen.blit(infantry_image, rect.topleft)
+        # pygame.draw.rect(screen, BLUE, rect)
         pygame.draw.rect(screen, BLACK, rect, 1)
 
     # 绘制坦克
@@ -159,7 +163,8 @@ def show_state(player_units, tank):
         CELL_WIDTH * tank.size[0],
         CELL_HEIGHT * tank.size[1]
     )
-    pygame.draw.rect(screen, RED, tank_rect)
+    # pygame.draw.rect(screen, RED, tank_rect)
+    screen.blit(tank_image, tank_rect.topleft)
     pygame.draw.rect(screen, BLACK, tank_rect, 1)
 
     draw_hp_panel(tank, player_units, screen)
@@ -168,16 +173,16 @@ def show_state(player_units, tank):
 
 
 
-
+SHOW_TIME = 10
 env = Environment()
 agent = QLearningAgent(env)
-num_episodes = 105
+num_episodes = 800
 show_state(env.player_units, env.tank)
 
 for episode in range(num_episodes):
     # 重置环境
     env.reset()
-    if episode > 100:
+    if episode > num_episodes - SHOW_TIME:
         show_state(env.player_units, env.tank)
     total_reward = 0
 
@@ -192,7 +197,7 @@ for episode in range(num_episodes):
                     action = agent.choose_action(state)
                     actions.append(action)
             # 执行动作并获取新状态和奖励
-            next_states, rewards, done = env.step(actions, episode > 100)
+            next_states, rewards, done = env.step(actions, episode > num_episodes - SHOW_TIME)
             # 更新Q表
             for idx, (state, action, reward, next_state) in enumerate(
                     zip(current_states, actions, rewards, next_states)):
@@ -209,7 +214,7 @@ for episode in range(num_episodes):
                 # 打印训练信息
                 print(f"Episode {episode + 1}: Total Reward = {total_reward}! ")
                 break
-            if episode > 100:
+            if episode > num_episodes - SHOW_TIME:
                 show_state(env.player_units, env.tank)
         except :
             pass

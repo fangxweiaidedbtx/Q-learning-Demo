@@ -3,8 +3,8 @@ import time
 import pygame
 
 # 设置窗口大小
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 1000
+WINDOW_WIDTH = 1400
+WINDOW_HEIGHT = 1200
 
 # 定义颜色
 BLACK = (0, 0, 0)
@@ -15,8 +15,8 @@ GREEN = (0, 255, 0)
 
 # 定义网格大小
 # GRID_SIZE = 20
-BOARD_WIDTH = 100
-BOARD_HEIGHT = 100
+BOARD_WIDTH = 60
+BOARD_HEIGHT = 60
 
 # 计算每个网格的实际像素大小
 CELL_WIDTH = (WINDOW_WIDTH - 200)  // BOARD_WIDTH
